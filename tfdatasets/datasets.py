@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import pickle
-from tensorflow.contrib.keras.api.keras.utils import get_file
+from tensorflow.python.keras.utils import get_file
 from lazy import lazy
 
 
