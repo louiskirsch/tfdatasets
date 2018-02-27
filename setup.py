@@ -9,5 +9,5 @@ setup(
     author='Louis Kirsch',
     author_email='',
     description='',
-    install_requires=['tensorflow', 'lazy', 'numpy']
+    install_requires=['lazy', 'numpy']
 )
