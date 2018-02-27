@@ -8,5 +8,5 @@ setup(
     license='',
     author='Louis Kirsch',
     author_email='',
-    description=''
+    description='', install_requires=['tensorflow', 'lazy', 'numpy']
 )
