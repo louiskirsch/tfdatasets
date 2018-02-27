@@ -9,8 +9,8 @@ from lazy import lazy
 
 
 def _create_dataset_from_numpy(images, labels):
-    feature_ph = tf.placeholder(images.dtype, images.shape)
-    labels_ph = tf.placeholder(labels.dtype, labels.shape)
+    feature_ph = tf.placeholder(tf.float32, images.shape)
+    labels_ph = tf.placeholder(tf.int32, labels.shape)
 
     dataset = tf.data.Dataset.from_tensor_slices((feature_ph, labels_ph))
     feed_dict = {feature_ph: images, labels_ph: labels}
@@ -86,11 +86,13 @@ class CIFAR10:
     @lazy
     def train(self) -> Tuple[tf.data.Dataset, Dict]:
         images, labels = self._train_data
+        labels = np.squeeze(labels)
         return _create_dataset_from_numpy(images, labels)
 
     @lazy
     def test(self) -> Tuple[tf.data.Dataset, Dict]:
         images, labels = self._test_data
+        labels = np.squeeze(labels)
         return _create_dataset_from_numpy(images, labels)
 
 
