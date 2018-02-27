@@ -15,8 +15,6 @@ def _create_dataset_from_numpy(images, labels):
     dataset = tf.data.Dataset.from_tensor_slices((feature_ph, labels_ph))
     feed_dict = {feature_ph: images, labels_ph: labels}
 
-    assert isinstance(dataset, tf.data.Dataset)
-
     return dataset, feed_dict
 
 
@@ -29,6 +27,14 @@ class MNIST:
     @property
     def name(self):
         return 'mnist'
+
+    @property
+    def num_train_examples(self):
+        return self.mnist.train.num_examples
+
+    @property
+    def num_test_examples(self):
+        return self.mnist.test.num_examples
 
     @property
     def num_classes(self):
@@ -60,6 +66,14 @@ class CIFAR10:
     @property
     def name(self):
         return 'cifar10'
+
+    @property
+    def num_train_examples(self):
+        return self._train_data[0].shape[0]
+
+    @property
+    def num_test_examples(self):
+        return self._test_data[0].shape[0]
 
     @property
     def num_classes(self):
@@ -125,6 +139,14 @@ class CIFAR100:
         return 'cifar100'
 
     @property
+    def num_train_examples(self):
+        return self._train_data[0].shape[0]
+
+    @property
+    def num_test_examples(self):
+        return self._test_data[0].shape[0]
+
+    @property
     def num_classes(self):
         return 10
 
@@ -175,6 +197,14 @@ class CIFAR100Task:
     @property
     def num_classes(self):
         return 5
+
+    @property
+    def num_train_examples(self):
+        return self._train_data[0].shape[0]
+
+    @property
+    def num_test_examples(self):
+        return self._test_data[0].shape[0]
 
     @lazy
     def train(self) -> Tuple[tf.data.Dataset, Dict]:
