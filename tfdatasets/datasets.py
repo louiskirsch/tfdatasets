@@ -241,7 +241,8 @@ class MergedDataset:
 
     def _merge(self, datasets, feed_dicts):
         # Add dataset identifier to each dataset
-        datasets = [dataset.map(lambda *args: args + (i,)) for i, dataset in enumerate(datasets)]
+        datasets = [dataset.map(lambda *args: args + (tf.constant(i, dtype=tf.int32),))
+                    for i, dataset in enumerate(datasets)]
         dataset_count = len(datasets)
         # Merge datasets
         # TODO how can we interleave these datasets?
@@ -260,6 +261,45 @@ class MergedDataset:
     def test(self) -> Tuple[tf.data.Dataset, Dict]:
         datasets, feed_dicts = zip(*[d.test for d in self._datasets])
         return self._merge(datasets, feed_dicts)
+
+
+class NumpyDataset:
+
+    def __init__(self, name, train, test, validation=None):
+        self.name = name
+        self._train_data = train
+        self._test_data = test
+        self._validation_data = validation
+        self.num_classes = np.max(self._train_data[1]) + 1
+
+    @property
+    def num_train_examples(self):
+        return self._train_data[0].shape[0]
+
+    @property
+    def num_test_examples(self):
+        return self._test_data[0].shape[0]
+
+    @property
+    def sample_shape(self):
+        return self._train_data[0].shape[1:]
+
+    @lazy
+    def train(self) -> Tuple[tf.data.Dataset, Dict]:
+        images, labels = self._train_data
+        return _create_dataset_from_numpy(images, labels)
+
+    @lazy
+    def test(self) -> Tuple[tf.data.Dataset, Dict]:
+        images, labels = self._test_data
+        return _create_dataset_from_numpy(images, labels)
+
+    @lazy
+    def validation(self) -> Tuple[tf.data.Dataset, Dict]:
+        if self._validation_data is None:
+            raise ValueError('No validation set available.')
+        images, labels = self._validation_data
+        return _create_dataset_from_numpy(images, labels)
 
 
 # TODO add SVHN dataset
