@@ -217,5 +217,50 @@ class CIFAR100Task:
         return _create_dataset_from_numpy(images, labels)
 
 
+class MergedDataset:
+
+    def __init__(self, name, datasets):
+        self.name = name
+        self._datasets = datasets
+
+    @property
+    def num_train_examples(self):
+        return sum(d.num_train_examples for d in self._datasets)
+
+    @property
+    def num_test_examples(self):
+        return sum(d.num_test_examples for d in self._datasets)
+
+    @property
+    def num_classes(self):
+        return self._datasets[0].num_classes
+
+    @property
+    def sample_shape(self):
+        return self._datasets[0].sample_shape
+
+    def _merge(self, datasets, feed_dicts):
+        # Add dataset identifier to each dataset
+        datasets = [dataset.map(lambda *args: args + (i,)) for i, dataset in enumerate(datasets)]
+        dataset_count = len(datasets)
+        # Merge datasets
+        # TODO how can we interleave these datasets?
+        merged = datasets[0]
+        for dataset in datasets[1:]:
+            merged = merged.concatenate(dataset)
+        feed_dict = {k: v for d in feed_dicts for k, v in d.items()}
+        return merged, feed_dict
+
+    @lazy
+    def train(self) -> Tuple[tf.data.Dataset, Dict]:
+        datasets, feed_dicts = zip(*[d.train for d in self._datasets])
+        return self._merge(datasets, feed_dicts)
+
+    @lazy
+    def test(self) -> Tuple[tf.data.Dataset, Dict]:
+        datasets, feed_dicts = zip(*[d.test for d in self._datasets])
+        return self._merge(datasets, feed_dicts)
+
+
 # TODO add SVHN dataset
 # TODO add Mini-Imagenet dataset
