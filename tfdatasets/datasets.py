@@ -180,14 +180,8 @@ class CIFAR100Task:
 
     @staticmethod
     def _make_ids_consecutive(items):
-        next_id = 0
-        assigned_ids = {}
-        for i, item in enumerate(items):
-            if item not in assigned_ids:
-                assigned_ids[item] = next_id
-                next_id += 1
-            items[i] = assigned_ids[item]
-        return items
+        _, consecutive = np.unique(items, return_inverse=True)
+        return consecutive
 
     def _extract_task(self, data):
         images, coarse_labels, fine_labels = data
@@ -207,6 +201,10 @@ class CIFAR100Task:
     @property
     def num_test_examples(self):
         return self._test_data[0].shape[0]
+
+    @property
+    def sample_shape(self):
+        return self._train_data[0].shape[1:]
 
     @lazy
     def train(self) -> Tuple[tf.data.Dataset, Dict]:
