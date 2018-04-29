@@ -310,5 +310,80 @@ class NumpyDataset:
         return _create_dataset_from_numpy(images, labels)
 
 
+class PennTreeBankDataset:
+
+    def __init__(self, directory=None, sequence_length=100):
+        if directory is None:
+            directory = Path.home() / 'data' / 'ptb'
+        self.sequence_length = sequence_length
+        (self.train_dataset, self.train_size), (self.test_dataset, self.test_size), self.vocab =\
+            self._ptb_train_and_test_dataset(directory)
+
+    @property
+    def name(self):
+        return 'PennTreeBank'
+
+    @property
+    def num_classes(self):
+        return len(self.vocab)
+
+    @property
+    def num_train_examples(self):
+        return self.train_size
+
+    @property
+    def num_test_examples(self):
+        return self.test_size
+
+    @property
+    def sample_shape(self):
+        return [self.sequence_length]
+
+    @property
+    def train(self) -> Tuple[tf.data.Dataset, Dict]:
+        return self.train_dataset, {}
+
+    @property
+    def test(self) -> Tuple[tf.data.Dataset, Dict]:
+        return self.test_dataset, {}
+
+    def _download(self, directory: Path) -> Path:
+        if not directory.exists():
+            directory.mkdir()
+            compressed = directory / 'simple-examples.tgz'
+
+            with compressed.open('wb') as f:
+                f.write(requests.get('http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz').content)
+
+            tar = tarfile.open(str(compressed))
+            tar.extractall(path=str(directory))
+            tar.close()
+
+        data_dir = directory / 'simple-examples' / 'data'
+        return data_dir / 'ptb.train.txt', data_dir / 'ptb.test.txt'
+
+    def _ptb_train_and_test_dataset(self, directory):
+        train_file, test_file = self._download(directory)
+
+        def get_words(file):
+            return [word for line in file.read_text().splitlines() for word in line.split(' ') if word != '']
+
+        train_words = get_words(train_file)
+        test_words = get_words(test_file)
+
+        vocab = Counter(train_words + test_words)
+        vocab = [key for key, value in vocab.most_common(None)]
+
+        def get_dataset(words):
+            array = np.array([vocab.index(word) for word in words])
+
+            chunk_length = self.sequence_length + 1
+            sequences = array[:-(array.shape[0] % chunk_length)].reshape((-1, chunk_length))
+
+            return tf.data.Dataset.from_tensor_slices((sequences[:, :-1], sequences[:, 1:])), len(sequences)
+
+        return get_dataset(train_words), get_dataset(test_words), vocab
+
+
 # TODO add SVHN dataset
 # TODO add Mini-Imagenet dataset
