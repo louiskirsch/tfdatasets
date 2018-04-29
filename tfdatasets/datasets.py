@@ -6,11 +6,16 @@ import os
 import pickle
 from tensorflow.python.keras.utils import get_file
 from lazy import lazy
+from pathlib import Path
+import requests
+import tarfile
+from collections import Counter
 
 
 def _create_dataset_from_numpy(images, labels):
     feature_ph = tf.placeholder(tf.float32, images.shape)
-    labels_ph = tf.placeholder(tf.int32, labels.shape)
+    label_dtype = tf.int32 if np.issubdtype(labels.dtype, np.integer) else tf.float32
+    labels_ph = tf.placeholder(label_dtype, labels.shape)
 
     dataset = tf.data.Dataset.from_tensor_slices((feature_ph, labels_ph))
     feed_dict = {feature_ph: images, labels_ph: labels}
@@ -270,7 +275,10 @@ class NumpyDataset:
         self._train_data = train
         self._test_data = test
         self._validation_data = validation
-        self.num_classes = np.max(self._train_data[1]) + 1
+        if len(train[1].shape) == 1:
+            self.num_classes = np.max(self._train_data[1]) + 1
+        else:
+            self.num_classes = None
 
     @property
     def num_train_examples(self):
